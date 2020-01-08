@@ -18,8 +18,6 @@ import static dev.blachut.svelte.lang.psi.SvelteTokenTypes.*;
 
 %{
   private int bracesNestingLevel = 0;
-  private int parens = 0;
-  private int brackets = 0;
 
   private IElementType quotedToken;
 
@@ -38,22 +36,8 @@ import static dev.blachut.svelte.lang.psi.SvelteTokenTypes.*;
       quotedToken = token;
       pushState(quoteState);
       return quotedToken;
-  }
-
-  private boolean notNestedCode() {
-      return (bracesNestingLevel + parens + brackets) == 0;
-  }
-
-  private void resetCounters() {
-      bracesNestingLevel = 0;
-      parens = 0;
-      brackets = 0;
-  }
+  }}
 %}
-
-%eof{
-  resetCounters();
-%eof}
 
 WHITE_SPACE=\s+
 ID=[$_a-zA-Z0-9]+
@@ -62,10 +46,6 @@ DOUBLE_QUOTE="\""
 TICKED_QUOTE="`"
 
 %state SVELTE_TAG
-%state VERBATIM_COMMENT
-%state VERBATIM_HTML
-%state HTML_TAG
-%xstate ONLY_WHITESPACE
 %xstate SINGLE_QUOTE
 %xstate DOUBLE_QUOTE
 %xstate TICKED_QUOTE
@@ -75,15 +55,6 @@ TICKED_QUOTE="`"
   {SINGLE_QUOTE}     { return beginQuote(SINGLE_QUOTE, CODE_FRAGMENT); }
   {DOUBLE_QUOTE}     { return beginQuote(DOUBLE_QUOTE, CODE_FRAGMENT); }
   {TICKED_QUOTE}     { return beginQuote(TICKED_QUOTE, CODE_FRAGMENT); }
-}
-
-<VERBATIM_COMMENT> "-->"                 { yybegin(YYINITIAL); return HTML_FRAGMENT; }
-<VERBATIM_HTML> "</script>" | "</style>" { yybegin(YYINITIAL); return HTML_FRAGMENT; }
-
-<HTML_TAG> {
-  {SINGLE_QUOTE}              { return beginQuote(SINGLE_QUOTE, HTML_FRAGMENT); }
-  {DOUBLE_QUOTE}              { return beginQuote(DOUBLE_QUOTE, HTML_FRAGMENT); }
-  ">"                         { yybegin(YYINITIAL); return HTML_FRAGMENT; }
 }
 
 <SINGLE_QUOTE> {SINGLE_QUOTE} { popState(); return quotedToken; }
