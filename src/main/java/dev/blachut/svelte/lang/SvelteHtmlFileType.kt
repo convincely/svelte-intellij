@@ -7,7 +7,7 @@ import javax.swing.Icon
 /**
  * Required by XmlElementFactory used to create empty script tags
  */
-class SvelteHtmlFileType : LanguageFileType(SvelteHTMLLanguage.INSTANCE) {
+class SvelteHtmlFileType : LanguageFileType(SvelteLanguage.INSTANCE) {
     override fun getName(): String {
         return "Svelte"
     }

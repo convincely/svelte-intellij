@@ -8,8 +8,8 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiUtilCore
-import dev.blachut.svelte.lang.SvelteHTMLLanguage
 import dev.blachut.svelte.lang.SvelteHtmlFileType
+import dev.blachut.svelte.lang.SvelteLanguage
 
 class SvelteHtmlContextType : TemplateContextType("SVELTE_HTML", "Svelte HTML", HtmlContextType::class.java) {
     override fun isInContext(file: PsiFile, offset: Int): Boolean {
@@ -22,7 +22,7 @@ class SvelteHtmlContextType : TemplateContextType("SVELTE_HTML", "Svelte HTML", 
 
     companion object {
         fun isMyLanguage(language: Language): Boolean {
-            return language.isKindOf(SvelteHTMLLanguage.INSTANCE)
+            return language.isKindOf(SvelteLanguage.INSTANCE)
         }
     }
 }

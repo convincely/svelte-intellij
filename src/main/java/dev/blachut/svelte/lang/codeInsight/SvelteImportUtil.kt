@@ -16,7 +16,7 @@ import com.intellij.psi.XmlElementFactory
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.xml.XmlTag
 import com.jetbrains.rd.util.firstOrNull
-import dev.blachut.svelte.lang.SvelteHTMLLanguage
+import dev.blachut.svelte.lang.SvelteLanguage
 import dev.blachut.svelte.lang.getJsEmbeddedContent
 import dev.blachut.svelte.lang.getRelativePath
 import dev.blachut.svelte.lang.psi.SvelteHtmlFile
@@ -83,7 +83,7 @@ object SvelteImportUtil {
 
         if (instanceScript == null) {
             val elementFactory = XmlElementFactory.getInstance(project)
-            val emptyInstanceScript = elementFactory.createTagFromText("<script>\n</script>", SvelteHTMLLanguage.INSTANCE)
+            val emptyInstanceScript = elementFactory.createTagFromText("<script>\n</script>", SvelteLanguage.INSTANCE)
             val moduleScript = currentFile.moduleScript
             val document = currentFile.document!!
 

@@ -13,9 +13,9 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.IXmlTagElementType
 import com.intellij.psi.xml.XmlTag
 import com.intellij.xml.util.XmlUtil
-import dev.blachut.svelte.lang.SvelteHTMLLanguage
+import dev.blachut.svelte.lang.SvelteLanguage
 
-class SvelteHtmlTagElementType(debugName: String) : IElementType(debugName, SvelteHTMLLanguage.INSTANCE), IXmlTagElementType
+class SvelteHtmlTagElementType(debugName: String) : IElementType(debugName, SvelteLanguage.INSTANCE), IXmlTagElementType
 
 val SVELTE_HTML_TAG = SvelteHtmlTagElementType("SVELTE_HTML_TAG")
 
