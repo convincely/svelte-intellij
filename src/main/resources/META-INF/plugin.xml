@@ -54,8 +54,6 @@
         <internalFileTemplate name="Svelte Component"/>
         <lang.fileViewProviderFactory language="SvelteHTML"
                                       implementationClass="dev.blachut.svelte.lang.SvelteFileViewProviderFactory"/>
-        <lang.parserDefinition language="Svelte"
-                               implementationClass="dev.blachut.svelte.lang.parsing.top.SvelteParserDefinition"/>
         <lang.parserDefinition language="SvelteJS"
                                implementationClass="dev.blachut.svelte.lang.parsing.js.SvelteJSParserDefinition"/>
         <lang.parserDefinition language="SvelteHTML"
