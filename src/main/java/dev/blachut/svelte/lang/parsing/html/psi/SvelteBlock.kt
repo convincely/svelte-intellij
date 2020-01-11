@@ -5,6 +5,7 @@ import com.intellij.lang.javascript.psi.JSElement
 import dev.blachut.svelte.lang.psi.SveltePsiElementImpl
 import dev.blachut.svelte.lang.psi.SvelteTag
 
+@Suppress("MemberVisibilityCanBePrivate")
 abstract class SvelteBlock(node: ASTNode) : SveltePsiElementImpl(node), JSElement {
     val startTag: SvelteTag get() = primaryBranch.tag
     val endTag: SvelteTag? get() = lastChild as? SvelteTag
