@@ -1,15 +1,15 @@
 package dev.blachut.svelte.lang.format
 
-import com.intellij.formatting.Alignment
-import com.intellij.formatting.Block
-import com.intellij.formatting.Indent
-import com.intellij.formatting.Wrap
+import com.intellij.formatting.*
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.formatter.xml.AbstractXmlBlock
 import com.intellij.psi.formatter.xml.XmlBlock
 import com.intellij.psi.formatter.xml.XmlFormattingPolicy
 import com.intellij.psi.formatter.xml.XmlTagBlock
 import dev.blachut.svelte.lang.parsing.html.psi.SvelteBlock
+import dev.blachut.svelte.lang.psi.SvelteEndTag
+import java.util.*
 
 private interface SvelteBlockOverrides {
     val xmlFormattingPolicy: XmlFormattingPolicy?
@@ -109,6 +109,46 @@ class SvelteBlockBlock(
     preserveSpace: Boolean
 ) : SvelteXmlTagBlock(node, wrap, alignment, policy, indent, preserveSpace) {
     override fun buildChildren(): MutableList<Block> {
-        return super.buildChildren()
+        val attrWrap = Wrap.createWrap(AbstractXmlBlock.getWrapType(myXmlFormattingPolicy.attributesWrap), false)
+        val textWrap = Wrap.createWrap(AbstractXmlBlock.getWrapType(myXmlFormattingPolicy.getTextWrap(tag)), true)
+        val tagBeginWrap = Wrap.createWrap(WrapType.NORMAL, false)
+        val attrAlignment = Alignment.createAlignment()
+        val textAlignment = Alignment.createAlignment()
+
+        val result = ArrayList<Block>(3)
+//        var localResult = ArrayList<Block?>(1)
+//        var insideTag = true
+
+        var child = myNode.firstChildNode
+        while (child != null) {
+            if (!AbstractXmlBlock.containsWhiteSpacesOnly(child) && child.textLength > 0) {
+                val wrap = chooseWrap(child, tagBeginWrap, attrWrap, textWrap)
+                val alignment = chooseAlignment(child, attrAlignment, textAlignment)
+
+                if (child.psi is SvelteEndTag) {
+//                    child = processChild(localResult, child, wrap, alignment, null)
+//                    result.add(createSyntheticBlock(localResult, null))
+
+//                    result.add(createSimpleChild(child, Indent.getNoneIndent(), wrap, alignment))
+                    result.add(createSyntheticBlock(arrayListOf(createSimpleChild(child, Indent.getNoneIndent(), wrap, alignment)), Indent.getNoneIndent()))
+                } else {
+                    val tag = child.firstChildNode
+//                    result.add(createSimpleChild(tag, Indent.getNoneIndent(), wrap, alignment))
+                    result.add(createSyntheticBlock(arrayListOf(createSimpleChild(tag, Indent.getNoneIndent(), wrap, alignment)), Indent.getNoneIndent()))
+
+                    val fragment = child.lastChildNode
+//                    result.add(createSimpleChild(fragment, Indent.getNormalIndent(), wrap, alignment))
+                    result.add(createSyntheticBlock(arrayListOf(createSimpleChild(fragment, Indent.getNormalIndent(), wrap, alignment)), Indent.getNoneIndent()))
+                }
+            }
+
+//            if (child != null) {
+            child = child.treeNext
+//            }
+        }
+
+        return result
     }
+
+//    getChildAttributes
 }
