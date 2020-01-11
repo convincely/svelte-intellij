@@ -1,49 +1,31 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package dev.blachut.svelte.lang.format
 
 import com.intellij.formatting.Alignment
 import com.intellij.formatting.ChildAttributes
 import com.intellij.formatting.Indent
 import com.intellij.formatting.Wrap
-import com.intellij.formatting.templateLanguages.*
+import com.intellij.formatting.templateLanguages.BlockWithParent
+import com.intellij.formatting.templateLanguages.DataLanguageBlockWrapper
+import com.intellij.formatting.templateLanguages.TemplateLanguageBlock
+import com.intellij.formatting.templateLanguages.TemplateLanguageBlockFactory
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.codeStyle.CodeStyleSettings
-import com.intellij.psi.formatter.FormattingDocumentModelImpl
 import com.intellij.psi.formatter.xml.HtmlPolicy
 import com.intellij.psi.formatter.xml.SyntheticBlock
 import com.intellij.psi.tree.IElementType
-import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.xml.XmlTag
-import dev.blachut.svelte.lang.psi.SvelteTokenTypes.HTML_FRAGMENT
+import dev.blachut.svelte.lang.psi.SvelteTokenTypes
 
-val blocks = TokenSet.create()
-
-/**
- * I don't really understand how it works.
- *
- * Based on Handlebars plugin
- */
-class SvelteFormattingModelBuilder : TemplateLanguageFormattingModelBuilder() {
-    override fun createTemplateLanguageBlock(node: ASTNode,
-                                             wrap: Wrap?,
-                                             alignment: Alignment?,
-                                             foreignChildren: List<DataLanguageBlockWrapper>?,
-                                             codeStyleSettings: CodeStyleSettings): TemplateLanguageBlock {
-        val documentModel = FormattingDocumentModelImpl.createOn(node.psi.containingFile)
-        val policy = HtmlPolicy(codeStyleSettings, documentModel)
-
-        return SvelteBlock(node, wrap, alignment, this, codeStyleSettings, foreignChildren, policy)
-    }
-}
-
-private class SvelteBlock(node: ASTNode,
-                          wrap: Wrap?,
-                          alignment: Alignment?,
-                          blockFactory: TemplateLanguageBlockFactory,
-                          settings: CodeStyleSettings,
-                          foreignChildren: List<DataLanguageBlockWrapper>?,
-                          private val myHtmlPolicy: HtmlPolicy) : TemplateLanguageBlock(node, wrap, alignment, blockFactory, settings, foreignChildren) {
+class OldSvelteBlock(
+    node: ASTNode,
+    wrap: Wrap?,
+    alignment: Alignment?,
+    blockFactory: TemplateLanguageBlockFactory,
+    settings: CodeStyleSettings,
+    foreignChildren: List<DataLanguageBlockWrapper>?,
+    private val myHtmlPolicy: HtmlPolicy
+) : TemplateLanguageBlock(node, wrap, alignment, blockFactory, settings, foreignChildren) {
     /**
      * We intend to indent the code in the following manner:
      * ```
@@ -96,7 +78,6 @@ private class SvelteBlock(node: ASTNode,
         }
 
 
-
         // any element that is the direct descendant of a foreign block gets an indent
         // (unless that foreign element has been configured to not indent its children)
         val foreignParent = getForeignBlockParent(true)
@@ -128,7 +109,7 @@ private class SvelteBlock(node: ASTNode,
         }
     }
 
-    override fun getTemplateTextElementType(): IElementType = HTML_FRAGMENT
+    override fun getTemplateTextElementType(): IElementType = SvelteTokenTypes.HTML_FRAGMENT
 
     override fun isRequiredRange(range: TextRange?): Boolean = false
 
@@ -146,7 +127,7 @@ private class SvelteBlock(node: ASTNode,
             if (parent is DataLanguageBlockWrapper && parent.original !is SyntheticBlock) {
                 foreignBlockParent = parent
                 break
-            } else if (immediate && parent is SvelteBlock) {
+            } else if (immediate && parent is OldSvelteBlock) {
                 break
             }
             parent = parent.parent
