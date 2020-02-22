@@ -4,11 +4,11 @@ import com.intellij.codeInsight.daemon.XmlErrorMessages
 import com.intellij.lang.PsiBuilder
 import com.intellij.lang.ecmascript6.ES6StubElementTypes
 import com.intellij.lang.html.HtmlParsing
-import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.xml.XmlElementType
 import com.intellij.psi.xml.XmlTokenType
 import dev.blachut.svelte.lang.isSvelteComponentTag
+import dev.blachut.svelte.lang.isTokenAfterWhiteSpace
 import dev.blachut.svelte.lang.psi.SVELTE_HTML_TAG
 import dev.blachut.svelte.lang.psi.SvelteElementTypes
 import dev.blachut.svelte.lang.psi.SvelteJSLazyElementTypes
@@ -88,8 +88,8 @@ class SvelteHtmlParsing(builder: PsiBuilder) : HtmlParsing(builder) {
             parseAttributeExpression(SvelteJSLazyElementTypes.SPREAD_OR_SHORTHAND)
         } else {
             val elementType = when (builder.tokenText!!.startsWith("let:", true)) {
-                true -> SvelteJSLazyElementTypes.PARAMETER
-                false -> SvelteJSLazyElementTypes.EXPRESSION
+                true -> SvelteJSLazyElementTypes.ATTRIBUTE_PARAMETER
+                false -> SvelteJSLazyElementTypes.ATTRIBUTE_EXPRESSION
             }
             advance()
             if (token() === XmlTokenType.XML_EQ) {
@@ -142,10 +142,7 @@ class SvelteHtmlParsing(builder: PsiBuilder) : HtmlParsing(builder) {
                 }
 
                 // Guard against adjacent shorthand or spread attributes ambiguity
-                // token() is called because it skips whitespaces, unlike bare advance()
-                token()
-                val lastRawToken = builder.rawLookup(-1)
-                if (lastRawToken === TokenType.WHITE_SPACE) {
+                if (builder.isTokenAfterWhiteSpace()) {
                     break
                 }
             }
