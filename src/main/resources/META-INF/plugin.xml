@@ -54,13 +54,16 @@
         <internalFileTemplate name="Svelte Component"/>
         <lang.fileViewProviderFactory language="Svelte"
                                       implementationClass="dev.blachut.svelte.lang.SvelteFileViewProviderFactory"/>
-        <lang.parserDefinition language="Svelte" implementationClass="dev.blachut.svelte.lang.parsing.top.SvelteParserDefinition"/>
+        <lang.parserDefinition language="Svelte"
+                               implementationClass="dev.blachut.svelte.lang.parsing.top.SvelteParserDefinition"/>
         <lang.parserDefinition language="SvelteJS"
                                implementationClass="dev.blachut.svelte.lang.parsing.js.SvelteJSParserDefinition"/>
         <lang.parserDefinition language="SvelteHTML"
                                implementationClass="dev.blachut.svelte.lang.parsing.html.SvelteHTMLParserDefinition"/>
         <stubElementTypeHolder class="dev.blachut.svelte.lang.psi.SvelteJSElementTypes"/>
         <lang.braceMatcher language="Svelte" implementationClass="dev.blachut.svelte.lang.editor.SvelteBraceMatcher"/>
+        <lang.braceMatcher language="SvelteHTML"
+                           implementationClass="dev.blachut.svelte.lang.editor.SvelteBraceMatcher"/>
         <lang.syntaxHighlighterFactory language="Svelte"
                                        implementationClass="dev.blachut.svelte.lang.SvelteSyntaxHighlighterFactory"/>
         <lang.commenter language="Svelte" implementationClass="com.intellij.lang.xml.XmlCommenter"/>
@@ -69,6 +72,7 @@
         <lang.formatter language="Svelte"
                         implementationClass="dev.blachut.svelte.lang.format.SvelteFormattingModelBuilder"/>
         <typedHandler implementation="dev.blachut.svelte.lang.editor.SvelteTypedHandler" order="before xmlSlash"/>
+        <typedHandler implementation="dev.blachut.svelte.lang.editor.SvelteBraceTypedHandler" order="before xmlSlash"/>
         <enterHandlerDelegate implementation="dev.blachut.svelte.lang.editor.SvelteEnterHandler"/>
         <xml.zenCodingGenerator implementation="dev.blachut.svelte.lang.editor.SvelteZenCodingGeneratorImpl"/>
         <xml.xmlSuppressionProvider implementation="dev.blachut.svelte.lang.SvelteSuppressionProvider"/>

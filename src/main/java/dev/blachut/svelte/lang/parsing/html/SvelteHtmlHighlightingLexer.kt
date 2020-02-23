@@ -1,6 +1,7 @@
 package dev.blachut.svelte.lang.parsing.html
 
 import com.intellij.lang.Language
+import com.intellij.lang.javascript.JSTokenTypes
 import com.intellij.lang.javascript.JavaScriptHighlightingLexer
 import com.intellij.lang.javascript.dialects.JSLanguageLevel
 import com.intellij.lexer.HtmlHighlightingLexer
@@ -16,7 +17,7 @@ class SvelteHtmlHighlightingLexer(jsLanguageLevel: JSLanguageLevel) : LayeredLex
 }
 
 // TODO Merge with SvelteHtmlHighlightingLexer by handling code fragments internally
-private open class BaseSvelteHtmlHighlightingLexer : HtmlHighlightingLexer(InnerSvelteHtmlLexer(), false, null) {
+private open class BaseSvelteHtmlHighlightingLexer : HtmlHighlightingLexer(InnerSvelteHtmlLexer(JSTokenTypes.LBRACE, JSTokenTypes.RBRACE), false, null) {
     private val helper = SvelteHtmlLexerHelper(object : SvelteHtmlLexerHandle {
         override var seenTag: Boolean
             get() = this@BaseSvelteHtmlHighlightingLexer.seenTag

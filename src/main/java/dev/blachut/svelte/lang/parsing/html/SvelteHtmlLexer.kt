@@ -1,12 +1,13 @@
 package dev.blachut.svelte.lang.parsing.html
 
 import com.intellij.lang.Language
+import com.intellij.lang.javascript.JSTokenTypes
 import com.intellij.lexer.HtmlHighlightingLexer
 import com.intellij.lexer.HtmlLexer
 import com.intellij.psi.tree.IElementType
 import dev.blachut.svelte.lang.parsing.js.SvelteJSScriptContentProvider
 
-class SvelteHtmlLexer : HtmlLexer(InnerSvelteHtmlLexer(), false) {
+class SvelteHtmlLexer : HtmlLexer(InnerSvelteHtmlLexer(JSTokenTypes.LBRACE, JSTokenTypes.RBRACE), false) {
     private val helper = SvelteHtmlLexerHelper(object : SvelteHtmlLexerHandle {
 
         override var seenTag: Boolean

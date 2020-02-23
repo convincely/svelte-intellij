@@ -3,6 +3,7 @@ package dev.blachut.svelte.lang.parsing.html
 import com.intellij.codeInsight.daemon.XmlErrorMessages
 import com.intellij.lang.PsiBuilder
 import com.intellij.lang.html.HtmlParsing
+import com.intellij.lang.javascript.JSTokenTypes
 import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.xml.XmlElementType
@@ -13,17 +14,17 @@ import dev.blachut.svelte.lang.psi.SvelteJSLazyElementTypes
 import dev.blachut.svelte.lang.psi.SvelteTypes
 
 /**
- * Due to the design of HtmlParsing, SvelteHtmlParsing remaps SvelteTypes.START_MUSTACHE to XmlTokenType.XML_NAME
+ * Due to the design of HtmlParsing, SvelteHtmlParsing remaps JSTokenTypes.LBRACE to XmlTokenType.XML_NAME
  * so that code enters overridable parseAttribute() path.
  * This is a lossy process, but required to make {shorthand} attributes work without copying whole HtmlParsing file.
  * Remapping also ensures that lexer and other token-based components do not care about HtmlParsing limitation.
  *
- * After checking if XmlTokenType.XML_NAME is in fact '{' token is remapped back to SvelteTypes.START_MUSTACHE.
+ * After checking if XmlTokenType.XML_NAME is in fact '{' token is remapped back to JSTokenTypes.LBRACE.
  */
 class SvelteHtmlParsing(builder: PsiBuilder) : HtmlParsing(builder) {
     init {
         builder.setTokenTypeRemapper { source, _, _, _ ->
-            return@setTokenTypeRemapper if (source === SvelteTypes.START_MUSTACHE) XmlTokenType.XML_NAME else source
+            return@setTokenTypeRemapper if (source === JSTokenTypes.LBRACE) XmlTokenType.XML_NAME else source
         }
     }
 
@@ -39,7 +40,7 @@ class SvelteHtmlParsing(builder: PsiBuilder) : HtmlParsing(builder) {
         assert(token() === XmlTokenType.XML_NAME)
         val att = mark()
 
-        if (isRemappedStartMustache()) {
+        if (isRemappedStartBrace()) {
             parseAttributeExpression(SvelteJSLazyElementTypes.SPREAD_OR_SHORTHAND)
         } else {
             val elementType = when (builder.tokenText!!.startsWith("let:", true)) {
@@ -75,7 +76,7 @@ class SvelteHtmlParsing(builder: PsiBuilder) : HtmlParsing(builder) {
                     error.error(XmlErrorMessages.message("unescaped.ampersand.or.nonterminated.character.entity.reference"))
                 } else if (tt === XmlTokenType.XML_ENTITY_REF_TOKEN) {
                     parseReference()
-                } else if (isRemappedStartMustache()) {
+                } else if (isRemappedStartBrace()) {
                     parseAttributeExpression(elementType)
                 } else {
                     advance()
@@ -89,8 +90,8 @@ class SvelteHtmlParsing(builder: PsiBuilder) : HtmlParsing(builder) {
             }
         } else {
             // Unquoted attr value. Unlike unmodified IntelliJ HTML this isn't necessary single token
-            while (token() === XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN || isRemappedStartMustache()) {
-                if (isRemappedStartMustache()) {
+            while (token() === XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN || isRemappedStartBrace()) {
+                if (isRemappedStartBrace()) {
                     parseAttributeExpression(elementType)
                 } else {
                     advance()
@@ -109,14 +110,14 @@ class SvelteHtmlParsing(builder: PsiBuilder) : HtmlParsing(builder) {
         attValue.done(XmlElementType.XML_ATTRIBUTE_VALUE)
     }
 
-    private fun isRemappedStartMustache(): Boolean {
+    private fun isRemappedStartBrace(): Boolean {
         return token() === XmlTokenType.XML_NAME && builder.originalText[builder.currentOffset] == '{'
     }
 
     private fun parseAttributeExpression(elementType: IElementType) {
         val expressionMarker = mark()
         // Remap must happen AFTER placing marker
-        builder.remapCurrentToken(SvelteTypes.START_MUSTACHE)
+        builder.remapCurrentToken(JSTokenTypes.LBRACE)
         advance() // {
         advanceCode(elementType)
         advance() // }
