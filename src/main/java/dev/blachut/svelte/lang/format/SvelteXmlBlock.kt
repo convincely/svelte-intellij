@@ -1,12 +1,16 @@
 package dev.blachut.svelte.lang.format
 
-import com.intellij.formatting.*
+import com.intellij.formatting.Alignment
+import com.intellij.formatting.Block
+import com.intellij.formatting.Indent
+import com.intellij.formatting.Wrap
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.formatter.xml.AbstractXmlBlock
 import com.intellij.psi.formatter.xml.XmlBlock
 import com.intellij.psi.formatter.xml.XmlFormattingPolicy
 import com.intellij.psi.formatter.xml.XmlTagBlock
+import com.intellij.psi.xml.XmlTokenType
 import dev.blachut.svelte.lang.psi.blocks.SvelteBlock
 import java.util.*
 
@@ -61,6 +65,57 @@ open class SvelteXmlTagBlock(
         var insideTag = true
 
         while (child != null) {
+            if (!AbstractXmlBlock.containsWhiteSpacesOnly(child) && child.textLength > 0) {
+                val wrap = chooseWrap(child, tagBeginWrap, attrWrap, textWrap)
+                val alignment = chooseAlignment(child, attrAlignment, textAlignment)
+
+                if (child.elementType === XmlTokenType.XML_TAG_END) {
+                    child = processChild(localResult, child, wrap, alignment, myXmlFormattingPolicy.tagEndIndent)
+                    result.add(createTagDescriptionNode(localResult))
+                    localResult = ArrayList(1)
+                    insideTag = true
+                } else if (child.elementType === XmlTokenType.XML_START_TAG_START) {
+                    insideTag = false
+                    if (!localResult.isEmpty()) {
+                        result.add(createTagContentNode(localResult))
+                    }
+                    localResult = ArrayList(1)
+                    child = processChild(localResult, child, wrap, alignment, null)
+                } else if (child.elementType === XmlTokenType.XML_END_TAG_START) {
+                    insideTag = false
+                    if (!localResult.isEmpty()) {
+                        result.add(createTagContentNode(localResult))
+                        localResult = ArrayList(1)
+                    }
+                    child = processChild(localResult, child, wrap, alignment, null)
+                } else if (child.elementType === XmlTokenType.XML_EMPTY_ELEMENT_END) {
+                    child = processChild(localResult, child, wrap, alignment, myXmlFormattingPolicy.tagEndIndent)
+                    result.add(createTagDescriptionNode(localResult))
+                    localResult = ArrayList(1)
+                } else if (isTagListStart(child.elementType)) {
+                    child = processChild(localResult, child, wrap, alignment, null)
+                    result.add(createTagDescriptionNode(localResult))
+                    localResult = ArrayList(1)
+                    insideTag = true
+                } else if (isTagListEnd(child.elementType)) {
+                    insideTag = false
+                    if (!localResult.isEmpty()) {
+                        result.add(createTagContentNode(localResult))
+                        localResult = ArrayList(1)
+                    }
+                    child = processChild(localResult, child, wrap, alignment, myXmlFormattingPolicy.tagEndIndent)
+                    result.add(createTagDescriptionNode(localResult))
+                    localResult = ArrayList(1)
+                } else {
+                    val indent: Indent? = if (!insideTag) {
+                        null
+                    } else {
+                        childrenIndent
+                    }
+                    child = processChild(localResult, child, wrap, alignment, indent)
+                }
+            }
+
             if (child != null) {
                 child = child.treeNext
             }
@@ -71,6 +126,10 @@ open class SvelteXmlTagBlock(
         }
 
         return result
+    }
+
+    private fun createTagDescriptionNode(localResult: ArrayList<Block>): Block {
+        return createSyntheticBlock(localResult, null)
     }
 
     private fun createTagContentNode(localResult: ArrayList<Block>): Block {
@@ -107,24 +166,24 @@ fun isSvelteBlock(child: ASTNode): Boolean {
     return child.psi is SvelteBlock
 }
 
-class X: AbstractXmlBlock() {
-    override fun insertLineBreakBeforeTag(): Boolean {
-        TODO("not implemented")
-    }
-
-    override fun buildChildren(): MutableList<Block> {
-        TODO("not implemented")
-    }
-
-    override fun isTextElement(): Boolean {
-        TODO("not implemented")
-    }
-
-    override fun removeLineBreakBeforeTag(): Boolean {
-        TODO("not implemented")
-    }
-
-    override fun getSpacing(child1: Block?, child2: Block): Spacing? {
-        TODO("not implemented")
-    }
-}
+//class X: AbstractXmlBlock() {
+//    override fun insertLineBreakBeforeTag(): Boolean {
+//        TODO("not implemented")
+//    }
+//
+//    override fun buildChildren(): MutableList<Block> {
+//        TODO("not implemented")
+//    }
+//
+//    override fun isTextElement(): Boolean {
+//        TODO("not implemented")
+//    }
+//
+//    override fun removeLineBreakBeforeTag(): Boolean {
+//        TODO("not implemented")
+//    }
+//
+//    override fun getSpacing(child1: Block?, child2: Block): Spacing? {
+//        TODO("not implemented")
+//    }
+//}
