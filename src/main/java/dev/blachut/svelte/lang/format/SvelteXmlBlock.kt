@@ -7,7 +7,6 @@ import com.intellij.formatting.Wrap
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.formatter.xml.*
-import com.intellij.psi.xml.XmlTokenType
 import dev.blachut.svelte.lang.psi.SvelteElementTypes
 import dev.blachut.svelte.lang.psi.SvelteEndTag
 import dev.blachut.svelte.lang.psi.blocks.SvelteBlock
@@ -53,58 +52,16 @@ open class SvelteXmlTagBlock(
 
         val attrWrap = Wrap.createWrap(AbstractXmlBlock.getWrapType(myXmlFormattingPolicy.attributesWrap), false)
         val textWrap = Wrap.createWrap(AbstractXmlBlock.getWrapType(myXmlFormattingPolicy.getTextWrap(tag)), true)
-        val tagBeginWrap = createTagBeginWrapping(tag)
         val attrAlignment = Alignment.createAlignment()
         val textAlignment = Alignment.createAlignment()
         val result = ArrayList<Block>(3)
 
         var child = myNode.firstChildNode
         var localResult = ArrayList<Block>(1)
-        var insideTag = true
 
         while (child != null) {
             if (!AbstractXmlBlock.containsWhiteSpacesOnly(child) && child.textLength > 0) {
-                val wrap = chooseWrap(child, tagBeginWrap, attrWrap, textWrap)
-                val alignment = chooseAlignment(child, attrAlignment, textAlignment)
-
-                if (child.elementType === XmlTokenType.XML_TAG_END) {
-                    child = processChild(localResult, child, wrap, alignment, myXmlFormattingPolicy.tagEndIndent)
-                    result.add(createTagDescriptionNode(localResult))
-                    localResult = ArrayList(1)
-                    insideTag = true
-                } else if (child.elementType === XmlTokenType.XML_START_TAG_START) {
-                    insideTag = false
-                    if (!localResult.isEmpty()) {
-                        result.add(createTagContentNode(localResult))
-                    }
-                    localResult = ArrayList(1)
-                    child = processChild(localResult, child, wrap, alignment, null)
-                } else if (child.elementType === XmlTokenType.XML_END_TAG_START) {
-                    insideTag = false
-                    if (!localResult.isEmpty()) {
-                        result.add(createTagContentNode(localResult))
-                        localResult = ArrayList(1)
-                    }
-                    child = processChild(localResult, child, wrap, alignment, null)
-                } else if (child.elementType === XmlTokenType.XML_EMPTY_ELEMENT_END) {
-                    child = processChild(localResult, child, wrap, alignment, myXmlFormattingPolicy.tagEndIndent)
-                    result.add(createTagDescriptionNode(localResult))
-                    localResult = ArrayList(1)
-//                } else if (isTagListStart(child.elementType)) {
-//                    child = processChild(localResult, child, wrap, alignment, null)
-//                    result.add(createTagDescriptionNode(localResult))
-//                    localResult = ArrayList(1)
-//                    insideTag = true
-//                } else if (isTagListEnd(child.elementType)) {
-//                    insideTag = false
-//                    if (!localResult.isEmpty()) {
-//                        result.add(createTagContentNode(localResult))
-//                        localResult = ArrayList(1)
-//                    }
-//                    child = processChild(localResult, child, wrap, alignment, myXmlFormattingPolicy.tagEndIndent)
-//                    result.add(createTagDescriptionNode(localResult))
-//                    localResult = ArrayList(1)
-                } else if (SvelteElementTypes.BRANCHES.contains(child.elementType)) {
+                if (SvelteElementTypes.BRANCHES.contains(child.elementType)) {
                     if (!localResult.isEmpty()) {
                         result.add(createTagContentNode(localResult))
                         localResult = ArrayList(1)
@@ -113,27 +70,19 @@ open class SvelteXmlTagBlock(
                     val tag = child.firstChildNode
                     val fragment = child.lastChildNode
 
-                    result.add(ReadOnlyBlock(tag))
-                    result.add(createSimpleChild(fragment, childrenIndent, wrap, alignment))
-
-//                    processBranch(localResult, child, wrap, alignment, childrenIndent)
-//                    result.addAll(localResult)
-//                    localResult = ArrayList(1)
+                    result.add(processTag(tag, attrWrap, textWrap, attrAlignment, textAlignment))
+                    result.add(processFragment(fragment, attrWrap, textWrap, attrAlignment, textAlignment))
                 } else if (child.psi is SvelteEndTag) {
                     if (!localResult.isEmpty()) {
                         result.add(createTagContentNode(localResult))
                         localResult = ArrayList(1)
                     }
-                    result.add(ReadOnlyBlock(child))
-
-//                    result.add(createSimpleChild(child, null, wrap, alignment))
+                    result.add(processTag(child, attrWrap, textWrap, attrAlignment, textAlignment))
                 } else {
-                    val indent: Indent? = if (!insideTag) {
-                        null
-                    } else {
-                        childrenIndent
-                    }
-                    child = processChild(localResult, child, wrap, alignment, indent)
+                    val wrap = chooseWrap(child, textWrap, attrWrap, textWrap)
+                    val alignment = chooseAlignment(child, attrAlignment, textAlignment)
+
+                    child = processChild(localResult, child, wrap, alignment, childrenIndent)
                 }
             }
 
@@ -147,6 +96,52 @@ open class SvelteXmlTagBlock(
         }
 
         return result
+    }
+
+    private fun processTag(tag: ASTNode, attrWrap: Wrap?, textWrap: Wrap?, attrAlignment: Alignment?, textAlignment: Alignment?): Block {
+        return createSyntheticBlock(arrayListOf(ReadOnlyBlock(tag)), Indent.getNoneIndent())
+//                    result.add(createSimpleChild(tag, null, wrap, alignment))
+
+//        val localResult = ArrayList<Block>(4)
+//
+//        var child = tag.firstChildNode
+//        while (child != null) {
+//            if (!AbstractXmlBlock.containsWhiteSpacesOnly(child) && child.textLength > 0) {
+//                val wrap = chooseWrap(child, textWrap, attrWrap, textWrap)
+//                val alignment = chooseAlignment(child, attrAlignment, textAlignment)
+//
+//                child = processChild(localResult, child, wrap, alignment, null)
+////                localResult.add(createSimpleChild(child, null, wrap, alignment))
+//            }
+//
+//            if (child != null) {
+//                child = child.treeNext
+//            }
+//        }
+//
+//        return createSyntheticBlock(localResult, Indent.getNoneIndent())
+    }
+
+    private fun processFragment(fragment: ASTNode, attrWrap: Wrap?, textWrap: Wrap?, attrAlignment: Alignment?, textAlignment: Alignment?): Block {
+        //                    result.add(createSimpleChild(fragment, Indent.getNoneIndent(), wrap, alignment))
+
+        val localResult = ArrayList<Block>(1)
+
+        var child = fragment.firstChildNode
+        while (child != null) {
+            if (!AbstractXmlBlock.containsWhiteSpacesOnly(child) && child.textLength > 0) {
+                val wrap = chooseWrap(child, textWrap, attrWrap, textWrap)
+                val alignment = chooseAlignment(child, attrAlignment, textAlignment)
+
+                child = processChild(localResult, child, wrap, alignment, childrenIndent)
+            }
+
+            if (child != null) {
+                child = child.treeNext
+            }
+        }
+
+        return createSyntheticBlock(localResult, childrenIndent)
     }
 
     private fun processBranch(result: MutableList<Block>, child: ASTNode, wrap: Wrap?, alignment: Alignment?, indent: Indent?) {
