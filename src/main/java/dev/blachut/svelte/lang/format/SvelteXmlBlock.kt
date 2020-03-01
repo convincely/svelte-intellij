@@ -6,13 +6,11 @@ import com.intellij.formatting.Indent
 import com.intellij.formatting.Wrap
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.formatter.xml.AbstractXmlBlock
-import com.intellij.psi.formatter.xml.XmlBlock
-import com.intellij.psi.formatter.xml.XmlFormattingPolicy
-import com.intellij.psi.formatter.xml.XmlTagBlock
+import com.intellij.psi.formatter.xml.*
 import com.intellij.psi.xml.XmlTokenType
+import dev.blachut.svelte.lang.psi.SvelteElementTypes
+import dev.blachut.svelte.lang.psi.SvelteEndTag
 import dev.blachut.svelte.lang.psi.blocks.SvelteBlock
-import java.util.*
 
 class SvelteXmlBlock(
     node: ASTNode?,
@@ -92,20 +90,43 @@ open class SvelteXmlTagBlock(
                     child = processChild(localResult, child, wrap, alignment, myXmlFormattingPolicy.tagEndIndent)
                     result.add(createTagDescriptionNode(localResult))
                     localResult = ArrayList(1)
-                } else if (isTagListStart(child.elementType)) {
-                    child = processChild(localResult, child, wrap, alignment, null)
-                    result.add(createTagDescriptionNode(localResult))
-                    localResult = ArrayList(1)
-                    insideTag = true
-                } else if (isTagListEnd(child.elementType)) {
-                    insideTag = false
+//                } else if (isTagListStart(child.elementType)) {
+//                    child = processChild(localResult, child, wrap, alignment, null)
+//                    result.add(createTagDescriptionNode(localResult))
+//                    localResult = ArrayList(1)
+//                    insideTag = true
+//                } else if (isTagListEnd(child.elementType)) {
+//                    insideTag = false
+//                    if (!localResult.isEmpty()) {
+//                        result.add(createTagContentNode(localResult))
+//                        localResult = ArrayList(1)
+//                    }
+//                    child = processChild(localResult, child, wrap, alignment, myXmlFormattingPolicy.tagEndIndent)
+//                    result.add(createTagDescriptionNode(localResult))
+//                    localResult = ArrayList(1)
+                } else if (SvelteElementTypes.BRANCHES.contains(child.elementType)) {
                     if (!localResult.isEmpty()) {
                         result.add(createTagContentNode(localResult))
                         localResult = ArrayList(1)
                     }
-                    child = processChild(localResult, child, wrap, alignment, myXmlFormattingPolicy.tagEndIndent)
-                    result.add(createTagDescriptionNode(localResult))
-                    localResult = ArrayList(1)
+
+                    val tag = child.firstChildNode
+                    val fragment = child.lastChildNode
+
+                    result.add(ReadOnlyBlock(tag))
+                    result.add(createSimpleChild(fragment, childrenIndent, wrap, alignment))
+
+//                    processBranch(localResult, child, wrap, alignment, childrenIndent)
+//                    result.addAll(localResult)
+//                    localResult = ArrayList(1)
+                } else if (child.psi is SvelteEndTag) {
+                    if (!localResult.isEmpty()) {
+                        result.add(createTagContentNode(localResult))
+                        localResult = ArrayList(1)
+                    }
+                    result.add(ReadOnlyBlock(child))
+
+//                    result.add(createSimpleChild(child, null, wrap, alignment))
                 } else {
                     val indent: Indent? = if (!insideTag) {
                         null
@@ -126,6 +147,14 @@ open class SvelteXmlTagBlock(
         }
 
         return result
+    }
+
+    private fun processBranch(result: MutableList<Block>, child: ASTNode, wrap: Wrap?, alignment: Alignment?, indent: Indent?) {
+        val tag = child.firstChildNode
+        val fragment = child.lastChildNode
+
+        result.add(createSimpleChild(tag, null, wrap, alignment))
+        result.add(createSimpleChild(fragment, indent, wrap, alignment))
     }
 
     private fun createTagDescriptionNode(localResult: ArrayList<Block>): Block {

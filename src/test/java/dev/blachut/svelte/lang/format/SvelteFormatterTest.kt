@@ -12,9 +12,10 @@ class SvelteFormatterTest : FormatterTestCase() {
         return super.getTestName(false)
     }
 
-    fun testScriptContents() = doTest()
-    fun testNestedBlocks() = doTest()
-    fun testNestedBlocksFlat() = doTest()
-    fun testIndentedExpressions() = doTest()
+    fun testNoSvelteBlocks() = doTest()
+//    fun testScriptContents() = doTest()
+//    fun testNestedBlocks() = doTest()
+//    fun testNestedBlocksFlat() = doTest()
+//    fun testIndentedExpressions() = doTest()
 //    fun testOneLineBlock() = doTest() // TODO Fix formatter and enable test
 }
